@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import pickle
 from PIL import Image
+import sklearn
+import os
 
 # Set page configuration
 st.set_page_config(
@@ -11,13 +13,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Load the model
-@st.cache_resource
-def load_model():
-    with open('loan_approval_model.pkl', 'rb') as file:
-        model = pickle.load(file)
-    return model
 
 # Custom CSS for styling
 st.markdown("""
@@ -32,6 +27,7 @@ st.markdown("""
         font-size: 1.5rem;
         color: #2e86ab;
         margin-bottom: 1rem;
+        text-align: center;
     }
     .prediction-approved {
         background-color: #d4edda;
@@ -42,6 +38,7 @@ st.markdown("""
         text-align: center;
         font-size: 1.5rem;
         font-weight: bold;
+        margin: 20px 0;
     }
     .prediction-rejected {
         background-color: #f8d7da;
@@ -52,6 +49,7 @@ st.markdown("""
         text-align: center;
         font-size: 1.5rem;
         font-weight: bold;
+        margin: 20px 0;
     }
     .sidebar-profile {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -71,20 +69,25 @@ st.markdown("""
         opacity: 0.9;
         margin-bottom: 15px;
     }
-    .social-badges {
-        margin-top: 15px;
-    }
     .feature-input {
         background-color: #f8f9fa;
-        padding: 15px;
+        padding: 20px;
         border-radius: 10px;
-        margin-bottom: 10px;
+        margin-bottom: 20px;
         border: 1px solid #e9ecef;
     }
     .contact-info {
         background-color: rgba(255, 255, 255, 0.1);
         padding: 15px;
         border-radius: 10px;
+        margin: 10px 0;
+    }
+    .demo-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #ffeaa7;
         margin: 10px 0;
     }
 </style>
@@ -110,7 +113,7 @@ with st.sidebar:
     st.write("sonparatesanket@gmail.com")
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Social Links with badges
+    # Social Links
     st.markdown("**🔗 Social Links**")
     
     col1, col2 = st.columns(2)
@@ -134,86 +137,138 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # About section
-    st.markdown("### 🚀 About This App")
-    st.write("""
-    This intelligent loan approval predictor uses machine learning to analyze applicant information 
-    and provide instant loan approval decisions using a trained Decision Tree Classifier.
-    """)
-    
-    st.markdown("### 💡 Features")
-    st.write("""
-    • Real-time prediction
-    • Confidence scoring
-    • Key factor analysis
-    • Professional interface
-    """)
+    # Version info
+    st.markdown("**🔧 Environment Info**")
+    st.write(f"scikit-learn: {sklearn.__version__}")
+    st.write(f"pandas: {pd.__version__}")
+    st.write(f"numpy: {np.__version__}")
 
 # Main content
-col1, col2 = st.columns([2, 1])
+st.markdown('<h1 class="main-header">🏦 Smart Loan Approval Predictor</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">AI-Powered Loan Decision System • Fast & Accurate Predictions</p>', unsafe_allow_html=True)
 
-with col1:
-    st.markdown('<h1 class="main-header">🏦 Smart Loan Approval Predictor</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">AI-Powered Loan Decision System • Fast & Accurate Predictions</p>', unsafe_allow_html=True)
+# Initialize session state for demo mode
+if 'demo_mode' not in st.session_state:
+    st.session_state.demo_mode = False
 
-# Load model
-try:
-    model_dict = load_model()
-    scaler = model_dict['scaler']
-    label_encoders = model_dict['label_encoders']
-    model = model_dict['model']
+# Load model with enhanced error handling
+@st.cache_resource
+def load_model():
+    try:
+        if os.path.exists('loan_approval_model.pkl'):
+            with open('loan_approval_model.pkl', 'rb') as file:
+                model_dict = pickle.load(file)
+            return model_dict
+        else:
+            st.warning("Model file not found. Running in demo mode.")
+            return None
+    except Exception as e:
+        st.warning(f"Model loading failed: {str(e)}. Running in demo mode.")
+        return None
+
+# Create demo model function
+def create_demo_model():
+    """Create a simple demo model for testing"""
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.preprocessing import StandardScaler, LabelEncoder
     
-    # Create input form
-    with st.form("loan_application_form"):
-        st.markdown('<div class="feature-input">', unsafe_allow_html=True)
-        st.subheader("📋 Applicant Information")
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.markdown("**Personal Details**")
-            gender = st.selectbox("Gender", options=label_encoders['Gender'].classes_)
-            married = st.selectbox("Married", options=label_encoders['Married'].classes_)
-            education = st.selectbox("Education", options=label_encoders['Education'].classes_)
-            self_employed = st.selectbox("Self Employed", options=label_encoders['Self_Employed'].classes_)
-            
-        with col2:
-            st.markdown("**Financial Information**")
-            dependents = st.selectbox("Dependents", options=label_encoders['Dependents'].classes_)
-            credit_history = st.selectbox("Credit History", options=[1, 0], 
-                                         format_func=lambda x: "Good" if x == 1 else "Bad")
-            property_area = st.selectbox("Property Area", options=label_encoders['Property_Area'].classes_)
-            
-        with col3:
-            st.markdown("**Income & Loan Details**")
-            applicant_income = st.number_input("Applicant Income ($)", min_value=0, max_value=100000, value=5000, step=100)
-            coapplicant_income = st.number_input("Co-applicant Income ($)", min_value=0, max_value=50000, value=0, step=100)
-            loan_amount = st.number_input("Loan Amount ($)", min_value=0, max_value=1000, value=100, step=10)
-            loan_term = st.slider("Loan Term (months)", min_value=12, max_value=480, value=360)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        submitted = st.form_submit_button("🔍 Predict Loan Approval", use_container_width=True)
+    # Create demo label encoders
+    label_encoders = {
+        'Gender': LabelEncoder().fit(['Male', 'Female']),
+        'Married': LabelEncoder().fit(['Yes', 'No']),
+        'Dependents': LabelEncoder().fit(['0', '1', '2', '3+']),
+        'Education': LabelEncoder().fit(['Graduate', 'Not Graduate']),
+        'Self_Employed': LabelEncoder().fit(['Yes', 'No']),
+        'Property_Area': LabelEncoder().fit(['Urban', 'Rural', 'Semiurban'])
+    }
+    
+    # Create demo scaler
+    scaler = StandardScaler()
+    scaler.mean_ = np.array([5000, 1000, 150, 360])
+    scaler.scale_ = np.array([2000, 500, 50, 120])
+    
+    # Create a simple demo model
+    model = DecisionTreeClassifier(random_state=42, max_depth=3)
+    
+    return {
+        'model': model,
+        'scaler': scaler,
+        'label_encoders': label_encoders
+    }
 
-    if submitted:
-        # Prepare input data
-        input_data = {
-            'Gender': gender,
-            'Married': married,
-            'Dependents': dependents,
-            'Education': education,
-            'Self_Employed': self_employed,
-            'ApplicantIncome': applicant_income,
-            'CoapplicantIncome': coapplicant_income,
-            'LoanAmount': loan_amount,
-            'Loan_Amount_Term': loan_term,
-            'Credit_History': credit_history,
-            'Property_Area': property_area
-        }
+# Load model or use demo mode
+model_dict = load_model()
+
+if model_dict is None:
+    st.markdown('<div class="demo-warning">', unsafe_allow_html=True)
+    st.warning("🔧 Demo Mode: Using simulated predictions for demonstration purposes.")
+    st.info("To use the real model, ensure 'loan_approval_model.pkl' is in the correct directory and compatible with scikit-learn 1.2.2")
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.session_state.demo_mode = True
+    model_dict = create_demo_model()
+
+# Extract components from the model dictionary
+scaler = model_dict.get('scaler')
+label_encoders = model_dict.get('label_encoders')
+model = model_dict.get('model')
+
+if not st.session_state.demo_mode:
+    st.success("✅ Model loaded successfully!")
+else:
+    st.info("🔄 Running in Demo Mode with simulated predictions")
+
+# Create input form
+with st.form("loan_application_form"):
+    st.markdown('<div class="feature-input">', unsafe_allow_html=True)
+    st.subheader("📋 Applicant Information")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("**Personal Details**")
+        gender = st.selectbox("Gender", options=label_encoders['Gender'].classes_)
+        married = st.selectbox("Married", options=label_encoders['Married'].classes_)
+        education = st.selectbox("Education", options=label_encoders['Education'].classes_)
+        self_employed = st.selectbox("Self Employed", options=label_encoders['Self_Employed'].classes_)
         
-        # Create DataFrame
-        input_df = pd.DataFrame([input_data])
+    with col2:
+        st.markdown("**Financial Information**")
+        dependents = st.selectbox("Dependents", options=label_encoders['Dependents'].classes_)
+        credit_history = st.selectbox("Credit History", options=[1, 0], 
+                                     format_func=lambda x: "Good" if x == 1 else "Bad")
+        property_area = st.selectbox("Property Area", options=label_encoders['Property_Area'].classes_)
         
+    with col3:
+        st.markdown("**Income & Loan Details**")
+        applicant_income = st.number_input("Applicant Income ($)", min_value=0, max_value=100000, value=5000, step=100)
+        coapplicant_income = st.number_input("Co-applicant Income ($)", min_value=0, max_value=50000, value=0, step=100)
+        loan_amount = st.number_input("Loan Amount ($)", min_value=0, max_value=1000, value=100, step=10)
+        loan_term = st.slider("Loan Term (months)", min_value=12, max_value=480, value=360)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    submitted = st.form_submit_button("🔍 Predict Loan Approval", use_container_width=True)
+
+if submitted:
+    # Prepare input data
+    input_data = {
+        'Gender': gender,
+        'Married': married,
+        'Dependents': dependents,
+        'Education': education,
+        'Self_Employed': self_employed,
+        'ApplicantIncome': applicant_income,
+        'CoapplicantIncome': coapplicant_income,
+        'LoanAmount': loan_amount,
+        'Loan_Amount_Term': loan_term,
+        'Credit_History': credit_history,
+        'Property_Area': property_area
+    }
+    
+    # Create DataFrame
+    input_df = pd.DataFrame([input_data])
+    
+    try:
         # Label encode categorical variables
         for column in label_encoders:
             if column in input_df.columns:
@@ -223,13 +278,43 @@ try:
         numerical_features = ['ApplicantIncome', 'CoapplicantIncome', 'LoanAmount', 'Loan_Amount_Term']
         input_df[numerical_features] = scaler.transform(input_df[numerical_features])
         
-        # Make prediction
-        prediction = model.predict(input_df)
-        prediction_proba = model.predict_proba(input_df)
+        if st.session_state.demo_mode:
+            # Demo mode: Simulate prediction based on rules
+            prob_approved = 0.7  # Base probability
+            
+            # Adjust probability based on inputs
+            if credit_history == 1:
+                prob_approved += 0.2
+            else:
+                prob_approved -= 0.3
+                
+            if applicant_income > 5000:
+                prob_approved += 0.1
+            else:
+                prob_approved -= 0.1
+                
+            if loan_amount < 200:
+                prob_approved += 0.1
+            else:
+                prob_approved -= 0.1
+                
+            # Ensure probability is between 0 and 1
+            prob_approved = max(0.1, min(0.9, prob_approved))
+            
+            prediction = ['Y'] if prob_approved > 0.5 else ['N']
+            prediction_proba = [[1-prob_approved, prob_approved]] if prediction[0] == 'Y' else [[prob_approved, 1-prob_approved]]
+            
+        else:
+            # Real model prediction
+            prediction = model.predict(input_df)
+            prediction_proba = model.predict_proba(input_df)
         
         # Display results
-        with col2:
-            st.markdown("### 📊 Prediction Result")
+        st.markdown("---")
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.subheader("📊 Prediction Result")
             
             if prediction[0] == 'Y':
                 st.markdown('<div class="prediction-approved">✅ LOAN APPROVED</div>', unsafe_allow_html=True)
@@ -245,24 +330,43 @@ try:
             
             # Progress bar for confidence
             st.progress(int(prob_approved * 100))
-            
-            # Feature importance visualization
-            st.markdown("### 🔍 Key Decision Factors")
-            important_features = {
-                "Credit History": "Very High Impact",
-                "Applicant Income": "High Impact", 
-                "Loan Amount": "High Impact",
-                "Co-applicant Income": "Medium Impact",
-                "Property Area": "Medium Impact",
-                "Loan Term": "Medium Impact"
+
+        with col2:
+            st.subheader("🔍 Key Decision Factors")
+            important_factors = {
+                "Credit History": "★★★★★",
+                "Applicant Income": "★★★★☆", 
+                "Loan Amount": "★★★★☆",
+                "Co-applicant Income": "★★★☆☆",
+                "Property Area": "★★★☆☆",
+                "Loan Term": "★★☆☆☆"
             }
             
-            for feature, impact in important_features.items():
-                st.write(f"• **{feature}**: {impact}")
+            for factor, stars in important_factors.items():
+                st.write(f"**{factor}**: {stars}")
+                
+            if st.session_state.demo_mode:
+                st.info("💡 Demo: Factors are simulated")
 
-except Exception as e:
-    st.error(f"Error loading model: {str(e)}")
-    st.info("Please ensure the model file 'loan_approval_model.pkl' is in the correct directory.")
+    except Exception as e:
+        st.error(f"Prediction error: {str(e)}")
+        st.info("Please try different input values or check the model configuration.")
+
+# Troubleshooting section
+with st.expander("🔧 Troubleshooting"):
+    st.markdown("""
+    **If you're experiencing issues:**
+    
+    1. **Model File Missing**: Ensure `loan_approval_model.pkl` is in the same directory
+    2. **Version Compatibility**: Use scikit-learn 1.2.2:
+       ```bash
+       pip install scikit-learn==1.2.2 pandas==1.5.3 numpy==1.24.3
+       ```
+    3. **File Corruption**: Verify the pickle file is not corrupted
+    4. **Demo Mode**: The app will automatically use demo mode if the model fails to load
+    
+    **Current Status:** {}
+    """.format("Demo Mode" if st.session_state.demo_mode else "Real Model Loaded"))
 
 # Footer
 st.markdown("---")
