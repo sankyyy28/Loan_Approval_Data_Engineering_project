@@ -1,6 +1,5 @@
-# Loan_Approval_Data_Engineering_project
 
-Here’s a suggested **README.md** for your repository **Loan_Approval_Data_Engineering_project** (on GitHub). You can copy/paste, then edit/fill in where appropriate (e.g. description, requirements, usage etc.).
+
 
 ```markdown
 # Loan Approval Data Engineering Project
