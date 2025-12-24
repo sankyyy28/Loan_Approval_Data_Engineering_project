@@ -1,15 +1,12 @@
 
 
-
-```markdown
 # Loan Approval Data Engineering Project
 
-## 🚀 Project Overview  
+##  Project Overview  
 This project is a data-engineering / machine-learning pipeline for loan approval prediction. It includes steps to load data into a database, train a model, and expose an API or application for making predictions.  
 
-## 📁 Repository Structure  
+##  Repository Structure  
 
-```
 
 Loan_Approval_Data_Engineering_project/
 │
@@ -23,16 +20,16 @@ Loan_Approval_Data_Engineering_project/
 ├── requirements.txt         # Python dependencies
 └── README.md                # Project documentation (this file)
 
-````
 
-## ✅ Features  
+
+##  Features  
 
 - Loads loan-applicant and financial data and stores into database (via `load_Database.py`)  
 - Trains a machine-learning model to predict loan approval (via `Train_Model.py`)  
 - Provides a simple application or API (via `App.py`) to make predictions given applicant / loan / financial info  
 - Example JSON files (`applicant_info.json`, `financial_info.json`, `loan_info.json`) to test / feed into the application  
 
-## 🛠️ Setup & Installation  
+##  Setup & Installation  
 
 1. Clone the repository:  
    ```bash
@@ -71,7 +68,7 @@ Loan_Approval_Data_Engineering_project/
 
    Then you can use the example JSON files to test predictions.
 
-## 💡 Usage Example
+##  Usage Example
 
 ```bash
 python App.py --input applicant_info.json --financial financial_info.json --loan loan_info.json  
@@ -79,21 +76,21 @@ python App.py --input applicant_info.json --financial financial_info.json --loan
 
 *(Adjust command/flags depending on how App.py is implemented)*
 
-## 📂 Input & Output Formats
+##  Input & Output Formats
 
 * Input should follow the JSON schema defined in `applicant_info.json`, `financial_info.json`, `loan_info.json`.
 * Output will be a loan approval prediction (e.g. “Approved” / “Rejected” / probability etc.).
 
-## 🧪 (Optional) Training / Retraining
+##  (Optional) Training / Retraining
 
 * If you want to retrain the model with new data, update the data source, then run `Train_Model.py`.
 * The output is saved as `loan_approval_model.pkl`.
 
-## 📄 Dependencies
+##  Dependencies
 
 See `requirements.txt` for Python libraries used.
 
-## 🤝 Contribution
+##  Contribution
 
 Contributions, suggestions and improvements are welcome. Feel free to:
 
@@ -101,11 +98,11 @@ Contributions, suggestions and improvements are welcome. Feel free to:
 * submit pull requests for enhancements
 * extend data preprocessing, model, API, or add documentation
 
-## 📄 License
+##  License
 
 Specify your license here (e.g., MIT, Apache-2.0)
 
-## 📞 Contact
+##  Contact
 
 If you have any questions or suggestions, feel free to contact me / raise an issue.
 
